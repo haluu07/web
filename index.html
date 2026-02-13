@@ -11,7 +11,7 @@
          * - Màu nền: Đen (#000)
          * - Ẩn thanh cuộn (overflow: hidden) để tạo không gian vô tận
          */
-      @import url("https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap");
 
       body,
       html {
@@ -19,9 +19,12 @@
         padding: 0;
         width: 100%;
         height: 100%;
-        background-color: #000;
+        /* Hiệu ứng Cực Quang (Aurora) */
+        background: linear-gradient(135deg, #000000 0%, #1a0b2e 50%, #000000 100%);
+        background-size: 400% 400%;
+        animation: aurora 15s ease infinite;
         overflow: hidden;
-        font-family: "Ma Shan Zheng", cursive;
+        font-family: "Dancing Script", cursive;
         user-select: none; /* Ngăn người dùng bôi đen chữ */
       }
 
@@ -38,14 +41,54 @@
       }
 
       @keyframes twinkle {
-        from {
-          opacity: 0.2;
-          transform: scale(0.8);
-        }
-        to {
-          opacity: 1;
-          transform: scale(1.2);
-        }
+        from { opacity: 0.2; transform: scale(0.8); }
+        to { opacity: 1; transform: scale(1.2); }
+      }
+      
+      @keyframes aurora {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      /* Hiệu ứng Sao Băng */
+      .meteor {
+        position: absolute;
+        width: 2px;
+        height: 100px;
+        background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.8));
+        transform: rotate(45deg);
+        pointer-events: none;
+        animation: meteorFall 2s linear infinite;
+        opacity: 0;
+      }
+
+      @keyframes meteorFall {
+        0% { transform: translate(0, 0) rotate(45deg); opacity: 1; }
+        100% { transform: translate(300px, 300px) rotate(45deg); opacity: 0; }
+      }
+      
+      @keyframes aurora {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      /* Hiệu ứng Sao Băng */
+      .meteor {
+        position: absolute;
+        width: 2px;
+        height: 100px;
+        background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.8));
+        transform: rotate(45deg);
+        pointer-events: none;
+        animation: meteorFall 2s linear infinite;
+        opacity: 0;
+      }
+
+      @keyframes meteorFall {
+        0% { transform: translate(0, 0) rotate(45deg); opacity: 1; }
+        100% { transform: translate(300px, 300px) rotate(45deg); opacity: 0; }
       }
 
       /* 
@@ -80,21 +123,26 @@
       }
 
       /* 
-         * STYLE CHO ẢNH TRÔI NỔI
-         * - Bo góc, đổ bóng
-         * - Fade in/out
+         * STYLE CHO ẢNH TRÔI NỔI (POLAROID)
+         * - Thêm viền trắng để tạo cảm giác ảnh in
+         */
+      /* 
+         * STYLE CHO ẢNH TRÔI NỔI (POLAROID)
+         * - Thêm viền trắng để tạo cảm giác ảnh in
          */
       .floating-image {
         position: absolute;
-        width: 250px;
-        height: 250px;
+        width: 220px; /* Giảm chút để bù cho viền */
+        height: 220px;
         object-fit: cover;
-        border-radius: 15px;
-        box-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
+        /* Viền Polaroid */
+        border: 8px solid #fff;
+        border-bottom: 30px solid #fff; 
+        background-color: #fff;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        transform-origin: center;
         opacity: 0;
-        animation:
-          floatImage 20s linear forwards,
-          fadeInOut 20s ease-in-out forwards;
+        animation: floatImage 20s linear forwards, fadeInOut 20s ease-in-out forwards;
       }
 
       /* Animation chung cho việc xuất hiện và biến mất */
@@ -201,20 +249,44 @@
       }
       /* RESPONSIVE CHO ĐIỆN THOẠI */
       @media screen and (max-width: 768px) {
-        /* Chữ thông điệp chính nhỏ lại để không bị tràn màn hình */
+        
+        /* Chữ thông điệp chính: Dùng đơn vị vw để tự co giãn theo chiều ngang */
         #love-message h1 {
-          font-size: 2.5rem;
+          font-size: 8vw; 
+          padding: 0 15px; /* Padding an toàn 2 bên */
         }
 
-        /* Ảnh bay nhỏ lại (từ 250px -> 120px) để không che hết màn hình */
+        /* 
+         * Ảnh "Polaroid" trên mobile:
+         * - Giảm kích thước tổng thể
+         * - Giảm độ dày viền trắng cho cân đối
+         */
         .floating-image {
-          width: 120px;
-          height: 120px;
+          width: 80px;
+          height: 80px;
+          border: 4px solid #fff;
+          border-bottom: 12px solid #fff; /* Viền dưới mỏng hơn */
         }
 
-        /* Chữ bay nhỏ lại một chút */
+        /* Chữ bay float: Cố định cỡ chữ nhỏ để dễ đọc, tránh che màn hình */
         .floating-text {
-          font-size: 18px !important; /* Dùng !important để ghi đè style inline của JS nếu cần */
+          font-size: 16px !important; 
+          letter-spacing: 1px;
+        }
+        
+        /* Tăng kích thước nút nhạc để dễ bấm bằng ngón tay */
+        #music-control {
+          width: 44px; /* To hơn chút */
+          height: 44px;
+          bottom: 30px; /* Nâng cao lên tránh vuốt nhầm thanh Home ảo */
+          right: 15px;
+        }
+        
+        /* Hướng dẫn text nhỏ lại */
+        #hint {
+           font-size: 12px;
+           bottom: 10px;
+           opacity: 0.8;
         }
       }
       /* Nút bật/tắt nhạc góc màn hình */
@@ -267,7 +339,7 @@
 
     <!-- Thông điệp chính (ẩn) -->
     <div id="love-message">
-      <h1>生命中有你，是我最美好的事💕</h1>
+      <h1>Anh yêu em nhiều lắm 💕</h1>
     </div>
 
     <!-- Hướng dẫn (tùy chọn) -->
@@ -280,7 +352,7 @@
     <!-- Lưu ý: Thay đổi src thành đường dẫn nhạc của bạn -->
     <audio id="bg-music" loop>
       <source
-        src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+        src="music/love.mp3"
         type="audio/mpeg"
       />
       Your browser does not support the audio element.
@@ -291,16 +363,15 @@
        * CẤU HÌNH NỘI DUNG
        */
       const messages = [
-        "我非常爱你 💖",
-        "情人节快乐 🌹",
-        "永远在一起",
-        "你是我最美好的遇见",
-        "执子之手，与子偕老",
-        "我的幸福就是你",
-        "爱你三千遍 ❤️",
-        "宝贝，我爱你",
-        "一生一世爱你 💕",
-        "想陪你去很远的地方"
+        "Anh yêu em rất nhiều 💖",
+        "Happy Valentine 🌹",
+        "Mãi bên nhau nhé",
+        "Em là điều tuyệt vời nhất",
+        "Love you to the moon 🌙",
+        "My happiness is you",
+        "Yêu em 3000 ❤️",
+        "Baby I love you",
+        "Mãi yêu em 💕",
       ];
 
       // DANH SÁCH ẢNH (Từ folder images)
