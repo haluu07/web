@@ -117,24 +117,113 @@
         justify-content: center;
         align-items: center;
         z-index: 20000;
-        background: rgba(0,0,0,0.8); /* Nền tối mờ */
+        background: radial-gradient(circle, #2b1055, #000); /* Nền ảo diệu hơn */
         transition: opacity 1.5s ease-out;
         cursor: pointer;
       }
       
-      .envelope {
+      /* ENVELOPE (BÌ THƯ) 3D */
+      .envelope-container {
+        position: relative;
+        width: 300px;
+        height: 200px;
+        background: #f08080;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      
+      .envelope-container::before {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-left: 150px solid transparent;
+        border-right: 150px solid transparent;
+        border-top: 100px solid #ff6f61; /* Nắp trên (màu tối hơn chút) */
+        top: 0;
+        left: 0;
+        transform-origin: top;
+        transition: transform 1s ease-in-out 0.5s; /* Delay để tim bay lên xong mới mở? Không, mở nắp trước */
+        z-index: 5;
+      }
+      
+      .envelope-container::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-left: 150px solid #ffb6c1; /* Cánh trái */
+        border-right: 150px solid #ffb6c1; /* Cánh phải */
+        border-bottom: 100px solid #ffc0cb; /* Đáy */
+        border-top: 100px solid transparent;
+        top: 0;
+        left: 0;
+        z-index: 4;
+        border-radius: 0 0 10px 10px;
+      }
+      
+      /* Lá thư / Trái tim bên trong (Bỏ nền trắng) */
+      .letter {
+        position: absolute;
+        width: 180px;
+        height: 90px; /* Thu nhỏ lại để vừa trong phong bì */
+        background: transparent; /* Bỏ nền trắng */
+        bottom: 0;
+        z-index: 3;
+        transition: transform 1s ease-in-out 1s, z-index 0.1s ease-in-out 1.5s; /* Bay lên sau khi nắp mở */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        /* border-radius: 5px; */
+        /* box-shadow: 0 -5px 10px rgba(0,0,0,0.1); */
+      }
+      
+      .letter-heart {
         font-size: 80px;
-        animation: pulse 2s infinite;
-        cursor: pointer;
-        filter: drop-shadow(0 0 10px #ff69b4);
+        color: #ff1493;
+        animation: pulse 1s infinite;
+        display: flex; /* Căn giữa SVG */
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+      }
+      
+      .letter-heart svg {
+        width: 80px;
+        height: 80px;
+        fill: #ff1493;
+        filter: drop-shadow(0 0 5px rgba(255,20,147,0.5));
+      }
+
+      /* Animation mở nắp thư */
+      .envelope-container.open::before {
+        transform: rotateX(180deg);
+        z-index: 2; /* Nắp mở ra sau lá thư nhưng trước box */
+      }
+      
+      /* Animation lá thư bay lên */
+      .envelope-container.open .letter {
+        transform: translateY(-120px); 
+        /* 
+         * QUAN TRỌNG: 
+         * Giữ z-index thấp hơn pocket (4) trong lúc bay lên để tạo hiệu ứng "chui ra từ trong".
+         * Sau khi bay xong mới đổi z-index lên trên cùng dể ko bị che.
+         */
+        z-index: 6; 
+        transition: transform 1s ease-in-out 0.8s, z-index 0.1s ease-in-out 1.8s; /* Delay z-index đến cuối cùng */
       }
       
       #intro-text {
-        font-size: 24px;
+        font-size: 20px;
         color: #fff;
-        margin-top: 20px;
+        margin-top: 150px; /* Đẩy xuống dưới bì thư */
         font-family: "Dancing Script", cursive;
         opacity: 0.8;
+        animation: blink 2s infinite;
       }
 
       /* 
@@ -289,9 +378,11 @@
         bottom: 20px;
         width: 100%;
         text-align: center;
-        color: rgba(255, 192, 203, 0.5);
-        font-size: 14px;
+        color: rgba(255, 192, 203, 0.8); /* Tăng độ rõ */
+        font-size: 24px; /* Tăng kích thước chữ */
         pointer-events: none;
+        font-family: "Dancing Script", cursive;
+        z-index: 10001; /* Đảm bảo nằm trên cùng */
       }
       /* RESPONSIVE CHO ĐIỆN THOẠI */
       @media screen and (max-width: 768px) {
@@ -328,11 +419,11 @@
           right: 15px;
         }
         
-        /* Hướng dẫn text nhỏ lại */
+        /* Hướng dẫn text nhỏ lại một chút so với Desktop nhưng vẫn to rõ */
         #hint {
-           font-size: 12px;
-           bottom: 10px;
-           opacity: 0.8;
+           font-size: 18px;
+           bottom: 15px;
+           opacity: 1;
         }
       }
       /* Nút bật/tắt nhạc góc màn hình */
@@ -381,10 +472,19 @@
     </style>
   </head>
   <body>
-    <!-- Màn hình chờ: Hộp thư -->
+    <!-- Màn hình chờ: Hộp thư 3D -->
     <div id="intro-screen">
-      <div class="envelope">💌</div>
-      <div id="intro-text">Bạn có một thư mới...</div>
+      <div class="envelope-container" id="envelope">
+        <div class="letter">
+           <div class="letter-heart">
+             <!-- Dùng SVG thay vì Emoji để tránh lỗi hiển thị -->
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+             </svg>
+           </div>
+        </div>
+      </div>
+      <div id="intro-text">Chạm để mở tim mình nè...</div>
     </div>
 
     <!-- Container chứa các hiệu ứng -->
@@ -530,32 +630,38 @@
        * XỬ LÝ SỰ KIỆN NGƯỜI DÙNG
        */
       
-      // 1. Click vào hộp thư (Intro Screen)
+      // 1. Click vào màn hình Intro
       introScreen.addEventListener("click", (e) => {
-         e.stopPropagation(); // Ngăn không cho click lan ra body (tránh kích hoạt luôn tin nhắn)
-         // Phát nhạc
+         e.stopPropagation();
+         
+         const envelope = document.getElementById("envelope");
+         envelope.classList.add("open"); // Kích hoạt animation mở thư
+         
+         // Phát nhạc ngay
          bgMusic.play()
            .then(() => {
               isPlaying = true;
               musicBtn.style.animationPlayState = "running";
            })
-           .catch(e => console.log("Lỗi phát nhạc: " + e));
-           
-         // Ẩn màn hình chờ
-         introScreen.style.opacity = "0";
+           .catch(e => console.log("Lỗi: " + e));
+         
+         // Sau khi mở thư xong (khoảng 2s) thì mới ẩn intro
          setTimeout(() => {
-            introScreen.style.display = "none";
-         }, 1500);
-         
-         // Hiện các thành phần chính
-         container.style.opacity = "1";
-         musicBtn.style.opacity = "1";
-         if (hint) hint.style.opacity = "1";
-         
-         // Bắt đầu tạo các element bay (sau khi đã vào trang chính)
-         setInterval(createFloatingText, 2500); // Chậm lại chút cho chill
-         setInterval(createFloatingImage, 4000);
-         setInterval(createMeteor, 2000); 
+             introScreen.style.opacity = "0";
+             setTimeout(() => {
+                introScreen.style.display = "none";
+             }, 1500);
+             
+             // Hiện các thành phần chính
+             container.style.opacity = "1";
+             musicBtn.style.opacity = "1";
+             if (hint) hint.style.opacity = "1";
+             
+             // Bắt đầu hiệu ứng
+             setInterval(createFloatingText, 2500);
+             setInterval(createFloatingImage, 4000);
+             setInterval(createMeteor, 2000);
+         }, 2500); // Đợi lá thư bay lên hết
       });
 
       // 2. Click vào màn hình (Sau khi đã vào trang, thay vì double click)
@@ -576,7 +682,7 @@
       /*
        * Hàm phụ: Hiệu ứng gõ chữ (Typewriter)
        */
-      const fullMessage = "Anh yêu em nhiều lắm 💕";
+      const fullMessage = "Chúc em valentine vuiii vẻee 💕";
       const typeTextElement = document.getElementById("typewriter-text");
       let isTyping = false;
       
