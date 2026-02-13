@@ -91,6 +91,20 @@
         100% { transform: translate(300px, 300px) rotate(45deg); opacity: 0; }
       }
 
+      /* Hiệu ứng Đom đóm (Fireflies) */
+      .firefly {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #ffff00; /* Màu vàng */
+        border-radius: 50%;
+        box-shadow: 0 0 10px #ffff00, 0 0 20px #ffff00; /* Phát sáng */
+        pointer-events: none;
+        opacity: 0.8;
+        z-index: 10;
+        transition: transform 0.2s ease-out; /* Di chuyển mượt khi tương tác */
+      }
+
       /* 
          * CONTAINER CHO CÁC PHẦN TỬ TRÔI NỔI (TEXT & IMAGES)
          */
@@ -453,6 +467,39 @@
       @keyframes spin {
         100% { transform: rotate(360deg); }
       }
+      
+      /* Hiệu ứng sóng nhạc (Visualizer) */
+      .music-wave {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 105, 180, 0.5);
+        opacity: 0;
+        z-index: -1;
+        pointer-events: none;
+        animation: musicWave 2s infinite cubic-bezier(0, 0, 0.2, 1);
+        /* Mặc định pause */
+        animation-play-state: paused;
+      }
+      
+      /* Tạo 3 vòng sóng với delay khác nhau */
+      .music-wave:nth-child(1) { animation-delay: 0s; }
+      .music-wave:nth-child(2) { animation-delay: 0.5s; }
+      .music-wave:nth-child(3) { animation-delay: 1s; }
+      
+      @keyframes musicWave {
+        0% {
+          transform: scale(1);
+          opacity: 0.8;
+          border-width: 2px;
+        }
+        100% {
+          transform: scale(3);
+          opacity: 0;
+          border-width: 0px;
+        }
+      }
 
       /* Hiệu ứng vệt tim theo chuột */
       .trail-heart {
@@ -489,6 +536,7 @@
 
     <!-- Container chứa các hiệu ứng -->
     <div id="stars"></div>
+    <div id="fireflies-container"></div> <!-- Container cho đom đóm -->
     <div id="floating-container"></div>
 
     <!-- Thông điệp chính (ẩn) -->
@@ -500,7 +548,13 @@
     <div id="hint" style="opacity: 0">Chạm vào màn hình nhé... 💖</div>
 
     <!-- Nút điều khiển nhạc (ẩn ban đầu) -->
-    <div id="music-control">🎵</div>
+    <div id="music-control">
+      <!-- Các vòng sóng nhạc -->
+      <div class="music-wave"></div>
+      <div class="music-wave"></div>
+      <div class="music-wave"></div>
+      🎵
+    </div>
 
     <!-- Âm thanh nền -->
     <!-- Lưu ý: Thay đổi src thành đường dẫn nhạc của bạn -->
@@ -642,6 +696,8 @@
            .then(() => {
               isPlaying = true;
               musicBtn.style.animationPlayState = "running";
+              // Chạy sóng nhạc
+              document.querySelectorAll(".music-wave").forEach(w => w.style.animationPlayState = "running");
            })
            .catch(e => console.log("Lỗi: " + e));
          
@@ -776,14 +832,17 @@
       let isPlaying = false;
       
       function toggleMusic() {
+        const waves = document.querySelectorAll(".music-wave");
         if (isPlaying) {
           bgMusic.pause();
           musicBtn.style.animationPlayState = "paused";
           musicBtn.style.opacity = "0.5";
+          waves.forEach(w => w.style.animationPlayState = "paused");
         } else {
           bgMusic.play().catch(e => console.log("Chưa tương tác"));
           musicBtn.style.animationPlayState = "running";
           musicBtn.style.opacity = "1";
+          waves.forEach(w => w.style.animationPlayState = "running");
         }
         isPlaying = !isPlaying;
       }
@@ -798,6 +857,7 @@
          isPlaying = true;
          musicBtn.style.animationPlayState = "running";
          musicBtn.style.opacity = "1";
+         document.querySelectorAll(".music-wave").forEach(w => w.style.animationPlayState = "running");
       };
 
       /*
@@ -808,6 +868,93 @@
       // Tạo text & ảnh định kỳ
       setInterval(createFloatingText, 2000);
       setInterval(createFloatingImage, 4000);
+      
+      /*
+       * 7. HIỆU ỨNG ĐOM ĐÓM (FIREFLIES)
+       */
+      function createFireflies() {
+         const container = document.getElementById("fireflies-container");
+         const count = 100; // Tăng số lượng đom đóm lên nhiều hơn
+         const fireflies = [];
+         
+         for(let i=0; i<count; i++) {
+             const fly = document.createElement("div");
+             fly.classList.add("firefly");
+             
+             // Vị trí ngẫu nhiên
+             let x = Math.random() * window.innerWidth;
+             let y = Math.random() * window.innerHeight;
+             
+             // Tốc độ di chuyển ngẫu nhiên
+             let vx = (Math.random() - 0.5) * 2; 
+             let vy = (Math.random() - 0.5) * 2;
+             
+             fly.style.left = x + "px";
+             fly.style.top = y + "px";
+             
+             container.appendChild(fly);
+             
+             fireflies.push({
+                 element: fly,
+                 x: x,
+                 y: y,
+                 vx: vx,
+                 vy: vy,
+                 baseVx: vx, // Lưu tốc độ gốc để hồi phục
+                 baseVy: vy
+             });
+         }
+         
+         // Animation loop cho đom đóm
+         function animateFireflies() {
+             fireflies.forEach(fly => {
+                 // Cập nhật vị trí
+                 fly.x += fly.vx;
+                 fly.y += fly.vy;
+                 
+                 // Va chạm biên (nảy lại)
+                 if(fly.x < 0 || fly.x > window.innerWidth) fly.vx *= -1;
+                 if(fly.y < 0 || fly.y > window.innerHeight) fly.vy *= -1;
+                 
+                 // Giảm tốc độ tản ra từ từ về tốc độ gốc (ma sát ảo)
+                 fly.vx += (fly.baseVx - fly.vx) * 0.05;
+                 fly.vy += (fly.baseVy - fly.vy) * 0.05;
+                 
+                 fly.element.style.left = fly.x + "px";
+                 fly.element.style.top = fly.y + "px";
+                 
+                 // Hiệu ứng nhấp nháy ngẫu nhiên
+                 fly.element.style.opacity = 0.5 + Math.random() * 0.5;
+             });
+             requestAnimationFrame(animateFireflies);
+         }
+         animateFireflies();
+         
+         // Tương tác chuột: Đom đóm tản ra
+         document.addEventListener("mousemove", (e) => {
+             const mouseX = e.clientX;
+             const mouseY = e.clientY;
+             
+             fireflies.forEach(fly => {
+                 const dx = fly.x - mouseX;
+                 const dy = fly.y - mouseY;
+                 const dist = Math.sqrt(dx*dx + dy*dy);
+                 
+                 // Nếu chuột lại gần (bán kính 100px)
+                 if(dist < 100) {
+                     // Đẩy đom đóm ra xa chuột
+                     const angle = Math.atan2(dy, dx);
+                     const force = (100 - dist) / 5; // Càng gần càng đẩy mạnh
+                     
+                     fly.vx += Math.cos(angle) * force;
+                     fly.vy += Math.sin(angle) * force;
+                 }
+             });
+         });
+      }
+      
+      // Chạy hiệu ứng đom đóm
+      createFireflies();
     </script>
   </body>
 </html>
