@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gửi đến em💖</title>
+    <style>
+      /* 
+         * CẤU HÌNH GIAO DIỆN CHUNG
+         * - Font chữ: Dancing Script (mềm mại, lãng mạn)
+         * - Màu nền: Đen (#000)
+         * - Ẩn thanh cuộn (overflow: hidden) để tạo không gian vô tận
+         */
+      @import url("https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap");
+
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #000;
+        overflow: hidden;
+        font-family: "Ma Shan Zheng", cursive;
+        user-select: none; /* Ngăn người dùng bôi đen chữ */
+      }
+
+      /* 
+         * HIỆU ỨNG SAO TRỜI (STAR BACKGROUND)
+         * - Các ngôi sao sẽ được tạo bằng JS và style tại đây
+         */
+      .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        opacity: 0.8;
+        animation: twinkle 2s infinite ease-in-out alternate;
+      }
+
+      @keyframes twinkle {
+        from {
+          opacity: 0.2;
+          transform: scale(0.8);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1.2);
+        }
+      }
+
+      /* 
+         * CONTAINER CHO CÁC PHẦN TỬ TRÔI NỔI (TEXT & IMAGES)
+         */
+      #floating-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none; /* Để click xuyên qua xuống nền */
+      }
+
+      /* 
+         * STYLE CHO CHỮ TRÔI NỔI
+         * - Màu hồng neon (#ff69b4, #ff1493)
+         * - Hiệu ứng bóng (text-shadow) để tạo cảm giác phát sáng
+         */
+      .floating-text {
+        position: absolute;
+        color: #ff69b4;
+        font-size: 24px;
+        text-shadow:
+          0 0 10px #ff1493,
+          0 0 20px #ff1493;
+        white-space: nowrap;
+        opacity: 0;
+        animation:
+          floatUp 15s linear forwards,
+          fadeInOut 15s ease-in-out forwards;
+      }
+
+      /* 
+         * STYLE CHO ẢNH TRÔI NỔI
+         * - Bo góc, đổ bóng
+         * - Fade in/out
+         */
+      .floating-image {
+        position: absolute;
+        width: 250px;
+        height: 250px;
+        object-fit: cover;
+        border-radius: 15px;
+        box-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
+        opacity: 0;
+        animation:
+          floatImage 20s linear forwards,
+          fadeInOut 20s ease-in-out forwards;
+      }
+
+      /* Animation chung cho việc xuất hiện và biến mất */
+      @keyframes fadeInOut {
+        0% {
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.8;
+        }
+        90% {
+          opacity: 0.8;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+
+      /* Animation bay lên cho chữ */
+      @keyframes floatUp {
+        from {
+          transform: translateY(100vh) scale(0.8);
+        }
+        to {
+          transform: translateY(-10vh) scale(1.1);
+        }
+      }
+
+      /* Animation bay lơ lửng cho ảnh (ngẫu nhiên hơn) */
+      @keyframes floatImage {
+        0% {
+          transform: translate(0, 100vh) rotate(0deg);
+        }
+        100% {
+          transform: translate(var(--moveX), -20vh) rotate(360deg);
+        }
+      }
+
+      /* 
+         * MÀN HÌNH TỎ TÌNH (KHI DOUBLE CLICK)
+         * - Nằm giữa màn hình
+         * - Ban đầu ẩn (display: none hoặc opacity: 0)
+         */
+      /* 
+         * MÀN HÌNH TỎ TÌNH (KHI DOUBLE CLICK)
+         * - Căn giữa bằng Flexbox để ổn định hơn, tránh bị lệch trên mobile
+         */
+      #love-message {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999; /* Đảm bảo luôn nằm trên cùng */
+        pointer-events: none;
+        
+        /* Trạng thái ẩn ban đầu */
+        opacity: 0;
+        transform: scale(0.5);
+        transition: all 0.5s ease-out;
+      }
+
+      #love-message.show {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      #love-message h1 {
+        font-size: 4rem;
+        color: #ff1493;
+        text-shadow:
+          0 0 20px #ff69b4,
+          0 0 40px #ff1493;
+        margin: 0;
+        margin: 0;
+        /* animation: pulse 1.5s infinite; */ /* Đã tắt hiệu ứng nhịp tim để chữ đứng yên */
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      /* Hướng dẫn nhỏ ở góc */
+      #hint {
+        position: fixed;
+        bottom: 20px;
+        width: 100%;
+        text-align: center;
+        color: rgba(255, 192, 203, 0.5);
+        font-size: 14px;
+        pointer-events: none;
+      }
+      /* RESPONSIVE CHO ĐIỆN THOẠI */
+      @media screen and (max-width: 768px) {
+        /* Chữ thông điệp chính nhỏ lại để không bị tràn màn hình */
+        #love-message h1 {
+          font-size: 2.5rem;
+        }
+
+        /* Ảnh bay nhỏ lại (từ 250px -> 120px) để không che hết màn hình */
+        .floating-image {
+          width: 120px;
+          height: 120px;
+        }
+
+        /* Chữ bay nhỏ lại một chút */
+        .floating-text {
+          font-size: 18px !important; /* Dùng !important để ghi đè style inline của JS nếu cần */
+        }
+      }
+      /* Nút bật/tắt nhạc góc màn hình */
+      #music-control {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 10000;
+        background: rgba(255, 105, 180, 0.2);
+        border: 1px solid #ff69b4;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        font-size: 20px;
+        cursor: pointer;
+        animation: spin 4s linear infinite;
+        /* Chưa quay khi chưa phát nhạc */
+        animation-play-state: paused;
+      }
+
+      @keyframes spin {
+        100% { transform: rotate(360deg); }
+      }
+
+      /* Hiệu ứng vệt tim theo chuột */
+      .trail-heart {
+        position: fixed;
+        pointer-events: none;
+        color: #ff69b4;
+        font-size: 15px;
+        animation: fadeUp 1s ease-out forwards;
+      }
+
+      @keyframes fadeUp {
+        to {
+          transform: translateY(-50px) scale(0);
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Container chứa các hiệu ứng -->
+    <div id="stars"></div>
+    <div id="floating-container"></div>
+
+    <!-- Thông điệp chính (ẩn) -->
+    <div id="love-message">
+      <h1>生命中有你，是我最美好的事💕</h1>
+    </div>
+
+    <!-- Hướng dẫn (tùy chọn) -->
+    <div id="hint">Chạm vào màn hình nhé... 💖</div>
+
+    <!-- Nút điều khiển nhạc -->
+    <div id="music-control">🎵</div>
+
+    <!-- Âm thanh nền -->
+    <!-- Lưu ý: Thay đổi src thành đường dẫn nhạc của bạn -->
+    <audio id="bg-music" loop>
+      <source
+        src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+        type="audio/mpeg"
+      />
+      Your browser does not support the audio element.
+    </audio>
+
+    <script>
+      /*
+       * CẤU HÌNH NỘI DUNG
+       */
+      const messages = [
+        "我非常爱你 💖",
+        "情人节快乐 🌹",
+        "永远在一起",
+        "你是我最美好的遇见",
+        "执子之手，与子偕老",
+        "我的幸福就是你",
+        "爱你三千遍 ❤️",
+        "宝贝，我爱你",
+        "一生一世爱你 💕",
+        "想陪你去很远的地方"
+      ];
+
+      // DANH SÁCH ẢNH (Từ folder images)
+      const images = [
+        "images/image1.png",
+        "images/image2.png",
+        "images/image3.png",
+        "images/image4.png",
+        "images/image5.png",
+        "images/image6.png",
+        "images/image7.png",
+        "images/image8.png",
+        "images/image9.png",
+        "images/image10.png",
+        "images/image11.png",
+        "images/image12.png",
+        "images/image13.png"
+      ];
+
+      const container = document.getElementById("floating-container");
+      const bgMusic = document.getElementById("bg-music");
+      const loveMessage = document.getElementById("love-message");
+      const hint = document.getElementById("hint");
+
+      /*
+       * 1. HIỆU ỨNG SAO TRỜI
+       */
+      function createStars() {
+        const starCount = 150;
+        const starContainer = document.getElementById("stars");
+
+        for (let i = 0; i < starCount; i++) {
+          const star = document.createElement("div");
+          star.classList.add("star");
+
+          // Vị trí ngẫu nhiên
+          const x = Math.random() * window.innerWidth;
+          const y = Math.random() * window.innerHeight;
+
+          // Kích thước ngẫu nhiên (1px - 3px)
+          const size = Math.random() * 2 + 1;
+
+          // Thời gian lấp lánh ngẫu nhiên
+          const duration = Math.random() * 3 + 1;
+
+          star.style.left = `${x}px`;
+          star.style.top = `${y}px`;
+          star.style.width = `${size}px`;
+          star.style.height = `${size}px`;
+          star.style.animationDuration = `${duration}s`;
+
+          starContainer.appendChild(star);
+        }
+      }
+
+      /*
+       * 2. TẠO CHỮ BAY LÊN
+       */
+      function createFloatingText() {
+        const text = document.createElement("div");
+        text.classList.add("floating-text");
+
+        // Chọn nội dung ngẫu nhiên
+        text.innerText = messages[Math.floor(Math.random() * messages.length)];
+
+        // Vị trí xuất phát ngẫu nhiên theo chiều ngang
+        text.style.left = Math.random() * 90 + "%"; // 0 - 90%
+
+        // Kích thước ngẫu nhiên
+        text.style.fontSize = Math.random() * 20 + 20 + "px"; // 20px - 40px
+
+        // Thời gian bay ngẫu nhiên
+        text.style.animationDuration = Math.random() * 5 + 10 + "s"; // 10s - 15s
+
+        container.appendChild(text);
+
+        // Xóa element sau khi animation kết thúc để tránh nặng máy
+        setTimeout(() => {
+          text.remove();
+        }, 15000);
+      }
+
+      /*
+       * 3. TẠO ẢNH BAY
+       */
+      function createFloatingImage() {
+        const img = document.createElement("img");
+        img.classList.add("floating-image");
+
+        // Chọn ảnh ngẫu nhiên
+        const randomSrc = images[Math.floor(Math.random() * images.length)];
+        img.src = randomSrc;
+
+        // Xử lý khi ảnh không tồn tại (ẩn đi để không hiện icon lỗi)
+        img.onerror = function() {
+          this.style.display = 'none';
+        };
+
+        // Vị trí xuất phát
+        img.style.left = Math.random() * 90 + "%";
+
+        // Random hướng bay ngang (để tạo cảm giác trôi tự nhiên hơn)
+        const moveX = (Math.random() - 0.5) * 200; // -100px đến 100px
+        img.style.setProperty("--moveX", `${moveX}px`);
+
+        container.appendChild(img);
+
+        setTimeout(() => {
+          img.remove();
+        }, 20000);
+      }
+
+      /*
+       * XỬ LÝ SỰ KIỆN NGƯỜI DÙNG
+       */
+
+      // Xử lý chung cho sự kiện Click (Mobile & PC đều dùng được)
+      document.body.addEventListener("click", () => {
+        // 1. Nếu nhạc chưa phát -> Phát nhạc trước
+        if (bgMusic.paused) {
+          bgMusic
+            .play()
+            .catch((e) => console.log("Cần tương tác để phát nhạc"));
+            
+          // Đổi dòng hướng dẫn
+          if (hint) hint.innerText = "Chạm thêm lần nữa đi... 💕";
+        } 
+        // 2. Nếu nhạc đã phát (tức là đã click lần 1) -> Hiện thông điệp
+        else {
+          loveMessage.classList.add("show");
+          createHeartExplosion();
+          
+          // Ẩn hướng dẫn
+          if (hint) hint.style.opacity = "0";
+        }
+      });
+
+      /*
+       * Hàm phụ: Hiệu ứng tim bay khi double click
+       */
+      function createHeartExplosion() {
+        for (let i = 0; i < 30; i++) {
+          const heart = document.createElement("div");
+          heart.innerText = "💖";
+          heart.style.position = "fixed";
+          heart.style.left = "50%";
+          heart.style.top = "50%";
+          heart.style.fontSize = Math.random() * 20 + 20 + "px";
+          heart.style.transform = `translate(-50%, -50%)`;
+          heart.style.pointerEvents = "none";
+          heart.style.transition = "all 1s ease-out";
+
+          document.body.appendChild(heart);
+
+          // Kích hoạt transition
+          requestAnimationFrame(() => {
+            const x = (Math.random() - 0.5) * window.innerWidth * 0.5;
+            const y = (Math.random() - 0.5) * window.innerHeight * 0.5;
+            heart.style.transform = `translate(${x}px, ${y}px) scale(0)`;
+            heart.style.opacity = 0;
+          });
+
+          setTimeout(() => heart.remove(), 1000);
+        }
+      }
+
+      /*
+       * 5. HIỆU ỨNG VỆT TIM THEO CHUỘT / TAY
+       */
+      function createTrailHeart(x, y) {
+        const heart = document.createElement("div");
+        heart.classList.add("trail-heart");
+        heart.innerText = "❤";
+        heart.style.left = x + "px";
+        heart.style.top = y + "px";
+        document.body.appendChild(heart);
+        
+        setTimeout(() => heart.remove(), 1000);
+      }
+
+      // Desktop
+      document.addEventListener("mousemove", (e) => {
+        // Tạo tim không quá dày đặc (giảm lag)
+        if (Math.random() < 0.3) {
+           createTrailHeart(e.clientX, e.clientY);
+        }
+      });
+      
+      // Mobile
+      document.addEventListener("touchmove", (e) => {
+        const touch = e.touches[0];
+        if (Math.random() < 0.3) {
+           createTrailHeart(touch.clientX, touch.clientY);
+        }
+      });
+
+      /*
+       * 6. NÚT NHẠC
+       */
+      const musicBtn = document.getElementById("music-control");
+      let isPlaying = false;
+      
+      function toggleMusic() {
+        if (isPlaying) {
+          bgMusic.pause();
+          musicBtn.style.animationPlayState = "paused";
+          musicBtn.style.opacity = "0.5";
+        } else {
+          bgMusic.play().catch(e => console.log("Chưa tương tác"));
+          musicBtn.style.animationPlayState = "running";
+          musicBtn.style.opacity = "1";
+        }
+        isPlaying = !isPlaying;
+      }
+      
+      musicBtn.addEventListener("click", (e) => {
+        e.stopPropagation(); // Ngăn sự kiện click lan ra body
+        toggleMusic();
+      });
+
+      // Cập nhật trạng thái nút nhạc khi click vào body
+      bgMusic.onplay = () => {
+         isPlaying = true;
+         musicBtn.style.animationPlayState = "running";
+         musicBtn.style.opacity = "1";
+      };
+
+      /*
+       * KHỞI CHẠY
+       */
+      createStars();
+
+      // Tạo text & ảnh định kỳ
+      setInterval(createFloatingText, 2000);
+      setInterval(createFloatingImage, 4000);
+    </script>
+  </body>
+</html>
