@@ -101,6 +101,40 @@
         width: 100%;
         height: 100%;
         pointer-events: none; /* Để click xuyên qua xuống nền */
+        opacity: 0; /* Ẩn ban đầu */
+        transition: opacity 2s ease-in;
+      }
+      
+      /* MÀN HÌNH CHỜ (INTRO) */
+      #intro-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 20000;
+        background: rgba(0,0,0,0.8); /* Nền tối mờ */
+        transition: opacity 1.5s ease-out;
+        cursor: pointer;
+      }
+      
+      .envelope {
+        font-size: 80px;
+        animation: pulse 2s infinite;
+        cursor: pointer;
+        filter: drop-shadow(0 0 10px #ff69b4);
+      }
+      
+      #intro-text {
+        font-size: 24px;
+        color: #fff;
+        margin-top: 20px;
+        font-family: "Dancing Script", cursive;
+        opacity: 0.8;
       }
 
       /* 
@@ -237,6 +271,18 @@
         }
       }
 
+      /* Hiệu ứng con trỏ nhấp nháy cho Typewriter */
+      .typing-cursor::after {
+        content: "|";
+        animation: blink 1s step-start infinite;
+        color: #ff1493;
+        margin-left: 5px;
+      }
+      
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+
       /* Hướng dẫn nhỏ ở góc */
       #hint {
         position: fixed;
@@ -309,6 +355,8 @@
         animation: spin 4s linear infinite;
         /* Chưa quay khi chưa phát nhạc */
         animation-play-state: paused;
+        opacity: 0; /* Ẩn nút nhạc ban đầu */
+        transition: opacity 1s;
       }
 
       @keyframes spin {
@@ -333,19 +381,25 @@
     </style>
   </head>
   <body>
+    <!-- Màn hình chờ: Hộp thư -->
+    <div id="intro-screen">
+      <div class="envelope">💌</div>
+      <div id="intro-text">Bạn có một thư mới...</div>
+    </div>
+
     <!-- Container chứa các hiệu ứng -->
     <div id="stars"></div>
     <div id="floating-container"></div>
 
     <!-- Thông điệp chính (ẩn) -->
     <div id="love-message">
-      <h1>Anh yêu em nhiều lắm 💕</h1>
+      <h1 id="typewriter-text"></h1>
     </div>
 
-    <!-- Hướng dẫn (tùy chọn) -->
-    <div id="hint">Chạm vào màn hình nhé... 💖</div>
+    <!-- Hướng dẫn (tùy chọn) - Ẩn ban đầu -->
+    <div id="hint" style="opacity: 0">Chạm vào màn hình nhé... 💖</div>
 
-    <!-- Nút điều khiển nhạc -->
+    <!-- Nút điều khiển nhạc (ẩn ban đầu) -->
     <div id="music-control">🎵</div>
 
     <!-- Âm thanh nền -->
@@ -374,27 +428,15 @@
         "Mãi yêu em 💕",
       ];
 
-      // DANH SÁCH ẢNH (Từ folder images)
-      const images = [
-        "images/image1.png",
-        "images/image2.png",
-        "images/image3.png",
-        "images/image4.png",
-        "images/image5.png",
-        "images/image6.png",
-        "images/image7.png",
-        "images/image8.png",
-        "images/image9.png",
-        "images/image10.png",
-        "images/image11.png",
-        "images/image12.png",
-        "images/image13.png"
-      ];
+      // DANH SÁCH ẢNH (Đã bị xóa hết nên để trống hoặc xóa hàm gọi ảnh)
+      const images = [];
 
       const container = document.getElementById("floating-container");
       const bgMusic = document.getElementById("bg-music");
       const loveMessage = document.getElementById("love-message");
       const hint = document.getElementById("hint");
+      const introScreen = document.getElementById("intro-screen");
+      const musicBtn = document.getElementById("music-control");
 
       /*
        * 1. HIỆU ỨNG SAO TRỜI
@@ -487,27 +529,80 @@
       /*
        * XỬ LÝ SỰ KIỆN NGƯỜI DÙNG
        */
-
-      // Xử lý chung cho sự kiện Click (Mobile & PC đều dùng được)
-      document.body.addEventListener("click", () => {
-        // 1. Nếu nhạc chưa phát -> Phát nhạc trước
-        if (bgMusic.paused) {
-          bgMusic
-            .play()
-            .catch((e) => console.log("Cần tương tác để phát nhạc"));
-            
-          // Đổi dòng hướng dẫn
-          if (hint) hint.innerText = "Chạm thêm lần nữa đi... 💕";
-        } 
-        // 2. Nếu nhạc đã phát (tức là đã click lần 1) -> Hiện thông điệp
-        else {
-          loveMessage.classList.add("show");
-          createHeartExplosion();
-          
-          // Ẩn hướng dẫn
-          if (hint) hint.style.opacity = "0";
-        }
+      
+      // 1. Click vào hộp thư (Intro Screen)
+      introScreen.addEventListener("click", (e) => {
+         e.stopPropagation(); // Ngăn không cho click lan ra body (tránh kích hoạt luôn tin nhắn)
+         // Phát nhạc
+         bgMusic.play()
+           .then(() => {
+              isPlaying = true;
+              musicBtn.style.animationPlayState = "running";
+           })
+           .catch(e => console.log("Lỗi phát nhạc: " + e));
+           
+         // Ẩn màn hình chờ
+         introScreen.style.opacity = "0";
+         setTimeout(() => {
+            introScreen.style.display = "none";
+         }, 1500);
+         
+         // Hiện các thành phần chính
+         container.style.opacity = "1";
+         musicBtn.style.opacity = "1";
+         if (hint) hint.style.opacity = "1";
+         
+         // Bắt đầu tạo các element bay (sau khi đã vào trang chính)
+         setInterval(createFloatingText, 2500); // Chậm lại chút cho chill
+         setInterval(createFloatingImage, 4000);
+         setInterval(createMeteor, 2000); 
       });
+
+      // 2. Click vào màn hình (Sau khi đã vào trang, thay vì double click)
+      document.body.addEventListener("click", () => {
+          // Chỉ hiện khi intro đã ẩn
+          if (introScreen.style.opacity === "0" || introScreen.style.display === "none") {
+              loveMessage.classList.add("show");
+              startTypewriter(); // Bắt đầu gõ chữ
+              createHeartExplosion();
+              
+              if (hint) hint.style.opacity = "0";
+          }
+      });
+
+      // Bỏ logic click 1 lần cũ đi vì đã có Intro Screen
+      // document.body.addEventListener("click", ...);
+
+      /*
+       * Hàm phụ: Hiệu ứng gõ chữ (Typewriter)
+       */
+      const fullMessage = "Anh yêu em nhiều lắm 💕";
+      const typeTextElement = document.getElementById("typewriter-text");
+      let isTyping = false;
+      
+      function startTypewriter() {
+        if (isTyping) return; // Tránh gọi lại khi đang gõ
+        isTyping = true;
+        
+        typeTextElement.classList.add("typing-cursor"); // Thêm con trỏ nhấp nháy
+        typeTextElement.innerText = ""; // Xóa trắng trước khi gõ
+        
+        let i = 0;
+        const typingSpeed = 100; // Tốc độ gõ (ms)
+        
+        function type() {
+          if (i < fullMessage.length) {
+            typeTextElement.innerText += fullMessage.charAt(i);
+            i++;
+            setTimeout(type, typingSpeed);
+          } else {
+            // Khi gõ xong thì bỏ con trỏ nhấp nháy (hoặc giữ lại tùy thích)
+            typeTextElement.classList.remove("typing-cursor");
+          }
+        }
+        
+        type();
+      }
 
       /*
        * Hàm phụ: Hiệu ứng tim bay khi double click
@@ -571,7 +666,7 @@
       /*
        * 6. NÚT NHẠC
        */
-      const musicBtn = document.getElementById("music-control");
+      // const musicBtn = document.getElementById("music-control"); // Đã khai báo ở trên
       let isPlaying = false;
       
       function toggleMusic() {
